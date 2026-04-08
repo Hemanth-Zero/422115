@@ -1,0 +1,29 @@
+EMP EXTENDED 
+
+select e.emp_id , h.mgr_id from emp e
+left join emp_manager_history h on e.emp_id = h.emp_id 
+and coalesce(h.valid_to,'2026-01-01') > '2017-06-01' and h.valid_from < '2017-06-01'; 
+
+select emp_id from emp_manager_history 
+group by emp_id 
+having count(*) > 2 ;
+
+with recursive reportking as (
+	select emp_id , emp_id as root from emp where name = 'KING'
+	union all
+	select c.emp_id , p.root from emp_manager_history c 
+	join reportking p on c.mgr_id = p.emp_id
+)select * from reportking ;
+
+select h1.emp_id , h1.mgr_id , h2.mgr_id from emp_manager_history h1
+join emp_manager_history h2 on h1.emp_id = h2.emp_id and h1.mgr_id <> h2.mgr_id 
+where coalesce(h1.valid_to,DATE '2026-01-01') > h2.valid_from AND h1.valid_from < COALESCE(h2.valid_to, DATE '2026-01-01');  
+
+
+
+with recursive chain as (
+	select emp_id , name as root from emp where name = 'KING' or name ='BLAKE' 
+	union all
+	select c.emp_id , p.root from emp_manager_history c
+	join chain p on p.emp_id = c.mgr_id 
+)select emp_id ,  count(*) as tot from chain   group by emp_id  having count(*) > 1 ;

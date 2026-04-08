@@ -1,0 +1,58 @@
+EMP mangaer ( 6Q ) 
+
+with recursive  totalemp as(
+	select r.emp_id , r.emp_id as root , r.mgr_id from emp r where r.mgr_id is NULL 
+	union all
+	select e.emp_id , p.root , e.mgr_id from emp e
+	join totalemp p on p.emp_id = e.mgr_id
+)
+select r.root , count(*)  from totalemp r 
+group by r.root ;
+-------------------------------------------------------------
+with recursive deepemp as (
+	select r.emp_id , r.emp_id as root , 1 as lvl from emp r where r.mgr_id is NULL
+	union all
+	select e.emp_id , p.root , p.lvl +1  from emp e
+	join deepemp p on p.emp_id = e.mgr_id
+)
+select r.emp_id , r.root , r.lvl from deepemp r 
+where r.lvl = ( select max(lvl) from deepemp k where k.root = r.root  ) ; 
+--------------------------------------------------------------
+with recursive  totalemp as(
+	select r.emp_id , r.emp_id as root , r.mgr_id from emp r 
+	where r.mgr_id is not null and r.emp_id not in (
+		with recursive cycle as (
+	select e.emp_id ,e.mgr_id, ARRAY[e.emp_id] as path , FALSE as incycle 
+	from emp e
+	union all
+	select e.emp_id ,e.mgr_id, c.path || e.emp_id ,
+	 e.emp_id = ANY (c.path) as incycle from emp e
+	join cycle c on c.mgr_id = e.emp_id where not c.incycle  
+)select cycle.emp_id from cycle where incycle = TRUE 
+		
+	)
+	union all
+	select e.emp_id , p.root , e.mgr_id from emp e
+	join totalemp p on p.emp_id = e.mgr_id
+)
+select r.root , count(*) as count  from totalemp r 
+group by r.root  order by count desc ;
+---------------------------------------------------
+with recursive cycle as (
+	select e.emp_id ,e.mgr_id, ARRAY[e.emp_id] as path , FALSE as incycle 
+	from emp e
+	union all
+	select e.emp_id ,e.mgr_id, c.path || e.emp_id ,
+	 e.emp_id = ANY (c.path) as incycle from emp e
+	join cycle c on c.mgr_id = e.emp_id where not c.incycle  
+)select * from cycle where incycle = TRUE ;
+-----------------------------------------------------
+
+with recursive mg_chain as (
+	select e.emp_id , Array[e.emp_id] as chain , e.salary as total , False as isgt
+	from emp e where e.mgr_id is null 
+	union all
+	select c.emp_id , m.chain || c.emp_id , GREATEST(m.total , c.salary ) ,
+	 c.salary > m.total as isgt  from emp c
+	join mg_chain m on c.mgr_id = m.emp_id  
+) select r.emp_id from mg_chain r where  r.isgt = TRUE ;

@@ -1,0 +1,70 @@
+POSTGRESQL CONSTRAINTS, TRIGGERS, AND RECURSIVE QUERIES
+
+— CONSTRAINTS —
+
+1.  PRIMARY KEY Ensures each row is unique and not null.
+
+CREATE TABLE students ( id SERIAL PRIMARY KEY, name TEXT );
+
+2.  FOREIGN KEY Maintains referential integrity.
+
+CREATE TABLE orders ( id SERIAL PRIMARY KEY, student_id INT REFERENCES
+students(id) );
+
+3.  UNIQUE Ensures all values are different.
+
+CREATE TABLE users ( email TEXT UNIQUE );
+
+4.  CHECK Ensures condition is satisfied.
+
+CREATE TABLE employees ( salary INT CHECK (salary > 0) );
+
+5.  NOT NULL Column cannot be empty.
+
+CREATE TABLE products ( name TEXT NOT NULL );
+
+— TRIGGERS —
+
+1.  BEFORE INSERT TRIGGER
+
+CREATE OR REPLACE FUNCTION trg_test()
+RETURNS TRIGGER AS $$
+DECLARE
+    temp INT;
+BEGIN
+    temp := NEW.salary * 2;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER before_insert_trigger BEFORE INSERT ON students FOR EACH
+ROW EXECUTE FUNCTION before_insert_fn();
+
+2.  AFTER INSERT TRIGGER
+
+CREATE OR REPLACE FUNCTION after_insert_fn() RETURNS TRIGGER AS
+BEGININSERTINTOlog_(t)ableVALUES(NEW.id, NOW()); RETURNNEW; END;
+LANGUAGE plpgsql;
+
+CREATE TRIGGER after_insert_trigger AFTER INSERT ON students
+ FOR EACH ROW EXECUTE FUNCTION after_insert_fn();
+
+— RECURSIVE QUERIES —
+
+1.  BASIC RECURSIVE QUERY
+
+WITH RECURSIVE nums(n) AS ( SELECT 1 UNION ALL SELECT n+1 FROM nums
+WHERE n < 5 ) SELECT * FROM nums;
+
+2.  HIERARCHY EXAMPLE
+
+WITH RECURSIVE emp_tree AS ( SELECT emp_id, mgr_id FROM employees WHERE
+mgr_id IS NULL
+
+    UNION ALL
+
+    SELECT e.emp_id, e.mgr_id
+    FROM employees e
+    JOIN emp_tree t ON e.mgr_id = t.emp_id
+
+) SELECT * FROM emp_tree;

@@ -1,0 +1,74 @@
+Select wp.first_name from player wp 
+join match_player mp on wp.player_id = mp.player_id and mp.is_winner = TRUE 
+join match_player lmp on lmp.match_id = mp.match_id  and wp.player_id <> lmp.player_id 
+join player_ranking  p1 on p1.player_id = wp.player_id  
+join player_ranking p2 on p2.player_id = lmp.player_id 
+where p1.rank > p2.rank ;
+
+select mp.player_id from match m 
+join round r on  r.round_id = 1 
+join match_player mp on mp.match_id = m.match_id and mp.is_winner = FALSE
+EXCEPT 
+select mp.player_id from match m 
+join round r on  r.round_id = 1 
+join match_player mp on mp.match_id = m.match_id and mp.is_winner = TRUE ;
+
+select t.name , count(*) from tournament t 
+join event e on e.tournament_id = t.tournament_id
+join match m on m.event_id = e.event_id
+join match_player wp on wp.match_id = m.match_id and wp.is_winner = TRUE
+join match_player lp on lp.match_id = m.match_id and lp.is_winner = FALSE
+WHERE wp.seed > lp.seed 
+Group by t.name ;
+
+select p.first_name , count(DISTINCT t.surface ) as count  from player p 
+join match_player mp on mp.player_id = p.player_id and mp.is_winner = TRUE 
+join match m on m.match_id = mp.match_id
+join event e on e.event_id = m.event_id
+join tournament t on t.tournament_id = e.tournament_id 
+group by p.first_name 
+having count(DISTINCT t.surface ) = 3
+;
+
+select e.event_id , e.prize_pool / count(distinct m.match_id) as perma from event e 
+join match m on m.event_id = e.event_id 
+group by e.event_id 
+order by perma DESC; 
+
+select p.player_id ,e.event_id, count(m.match_id)  as count from player p
+join match_player mp on mp.player_id = p.player_id
+join match m on m.match_id = mp.match_id
+join event e on e.event_id = m.event_id
+group by p.player_id , e.event_id
+order by count Desc ;
+
+select p.player_id , count( m.match_id) as count from player p
+join match_player mp on p.player_id = mp.player_id 
+join match m on m.match_id = mp.match_id
+join round r on r.round_id = m.round_id
+where r.round_name = 'Final'
+group by p.player_id 
+order by count Desc ;
+
+select p.country , count( m.match_id) as count from player p
+join match_player mp on p.player_id = mp.player_id 
+join match m on m.match_id = mp.match_id
+join round r on r.round_id = m.round_id
+where r.round_name = 'Semi Final'
+group by p.country 
+order by count Desc ;
+
+select p.player_id from player p
+join match_player mp on mp.player_id = p.player_id and mp.is_winner = TRUE 
+join player_ranking r1 on r1.player_id = p.player_id
+join player_ranking r2 on r2.player_id = p.player_id
+where r1.rank < r2.rank and
+r1.ranking_date > r2.ranking_date ;
+
+
+
+ALTER TABLE tournament 
+ADD CONSTRAINT chk
+CHECK ( category in ('..
+
+h
